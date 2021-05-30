@@ -11,6 +11,51 @@ from sumy.summarizers.kl import KLSummarizer as Summarizer
 from sumy.nlp.stemmers import Stemmer
 from sumy.utils import get_stop_words
 import streamlit as st
+import pickle
+import pandas as pd
+from nltk.corpus import stopwords
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+import networkx as nx
+
+def remove_stopwords(sen: str) -> str:
+    stop_words = stopwords.words('english')
+    sen_new = " ".join([i for i in sen if i not in stop_words])
+    return sen_new
+
+def textRank(text: str, language="english"):
+    with open('word-embebed-en.bin', 'rb') as file:
+        dict_embebed = pickle.load(file)
+    from nltk.tokenize import sent_tokenize
+
+    input_text = sent_tokenize(text.lower())
+    clean_sentences = pd.Series(input_text).str.replace("[^a-zãáàèéçíìõòóôêúù]", " ")
+    clean_sentences = [remove_stopwords(r.split()) for r in clean_sentences]
+
+    vectors = []
+    for i in clean_sentences:
+        if len(i) != 0:
+            v = sum([dict_embebed.get(w, np.zeros((100,))) for w in i.split()])/(len(i.split())+0.001)
+        else:
+            
+            v = np.zeros((100,))
+        vectors.append(v)
+
+    matrix_similaridade = np.zeros([len(clean_sentences), len(clean_sentences)])
+    for i in range(len(input_text)):
+        for j in range(len(input_text)):
+            if i != j:
+                matrix_similaridade[i][j] = cosine_similarity(vectors[i].reshape(1,100), vectors[j].reshape(1,100))[0,0]
+    
+    nx_graph = nx.from_numpy_array(matrix_similaridade)
+    scores = nx.pagerank(nx_graph)
+    rank = sorted(((scores[i],s) for i,s in enumerate(input_text)), reverse=True)
+    result = ""
+    for i in range(5):
+        result += rank[i][1]
+    return result
+    
+
 
 # https://github.com/yongzhuo/nlg-yongzhuo/blob/master/nlg_yongzhuo/text_summarization/extractive_sum/topic_base/topic_nmf.py
 
