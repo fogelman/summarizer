@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
+from pathlib import Path
 
 
 from sumy.parsers.plaintext import PlaintextParser
@@ -24,6 +25,9 @@ def remove_stopwords(sen: str) -> str:
     return sen_new
 
 def textRank(text: str, language="english"):
+    if not Path('pre-processed.bin').is_file():
+        print(f"baixe o arquivo de vetores de palavras em https://drive.google.com/file/d/14ldEW28U7vedEwFTtUqPZGmtUomv1XmL/view e coloque na raiz do projeto")
+        exit(1)
     with open('word-embebed-en.bin', 'rb') as file:
         dict_embebed = pickle.load(file)
     from nltk.tokenize import sent_tokenize
@@ -48,7 +52,7 @@ def textRank(text: str, language="english"):
                 matrix_similaridade[i][j] = cosine_similarity(vectors[i].reshape(1,100), vectors[j].reshape(1,100))[0,0]
     
     nx_graph = nx.from_numpy_array(matrix_similaridade)
-    scores = nx.pagerank(nx_graph)
+    scores = nx.Textrank(nx_graph)
     rank = sorted(((scores[i],s) for i,s in enumerate(input_text)), reverse=True)
     result = ""
     for i in range(5):
@@ -99,12 +103,12 @@ def dummy(text, **kwargs):
 
 models = {
     "NMF": nmf,
-    "PageRank": dummy,
+    "TextRank": textRank,
     "KL": kl}
 
 descriptions = {
     "NMF": "The chosen model is NMF whitch differs from LSA by producing positive values for each topic, increasing interpretability in the results.",
-    "PageRank": "",
+    "TextRank": "Google Page ranks algorithm",
     "KL": "Kullback–Leibler Model implemented using sumy"
 }
 
