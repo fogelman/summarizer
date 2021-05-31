@@ -25,7 +25,7 @@ def remove_stopwords(sen: str) -> str:
     return sen_new
 
 def textRank(text: str, language="english"):
-    if not Path('pre-processed.bin').is_file():
+    if not Path('word-embebed-en.bin').is_file():
         print(f"baixe o arquivo de vetores de palavras em https://drive.google.com/file/d/14ldEW28U7vedEwFTtUqPZGmtUomv1XmL/view e coloque na raiz do projeto")
         exit(1)
     with open('word-embebed-en.bin', 'rb') as file:
